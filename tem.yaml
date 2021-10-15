@@ -1,15 +1,42 @@
-apiVersion: v1
-kind: Pod
+
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
 metadata:
-  creationTimestamp: null
-  labels:
-    run: redis
-  name: redis
+  name: myuser
 spec:
-  containers:
-  - image: redis
-    name: redis
-    resources: {}
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-status: {}
+  request: $(cat akshay.csr | base64 | tr -d "\n")
+  # signerName: kubernetes.io/kube-apiserver-client
+  # expirationSeconds: 86400  # one day
+  request: $(cat akshay.csr | base64 | tr -d '\n')
+  usages:
+  - client auth
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: akshay
+spec:
+  request: $(cat akshay.csr | base64 | tr -d '\n')
+  signerName: kubernetes.io/kube-apiserver-client
+  # expirationSeconds: 86400  # one day
+  usages:
+  - client auth
+EOF
+
+
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: akshay-csr
+spec:
+  request: $(cat akshay.csr | base64 | tr -d '\n')
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth
+EOF

@@ -56,6 +56,7 @@ LS0tRU5EIENFUlRJRklDQVRFIFJFUVVFU1QtLS0tLQo=
 
 
 ### RBAC
+* Role & Rolebinding
 ```
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -68,3 +69,100 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 * to check access `kubectl auth can-i create deployments --as dev-user`
+
+* ClusterRole & ClusterRoleBinding
+* Service Account
+* ImageSecurtiy
+* security Context
+* Networ Policy `Ingress` `Egress`
+
+
+
+# Storage
+
+* Volume Mount with HostPath
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-webserver
+spec:
+  containers:
+  - name: test-webserver
+    image: k8s.gcr.io/test-webserver:latest
+    volumeMounts:
+    - mountPath: /var/local/aaa
+      name: mydir
+    - mountPath: /var/local/aaa/1.txt
+      name: myfile
+  volumes:
+  - name: mydir
+    hostPath:
+      # Ensure the file directory is created.
+      path: /var/local/aaa
+      type: DirectoryOrCreate
+  - name: myfile
+    hostPath:
+      path: /var/local/aaa/1.txt
+      type: FileOrCreate
+```
+
+
+### PersistentVoluem
+
+```
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-log
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+   path: /pv/log
+  ```
+
+  #### Persistent Volume Claim
+  ```
+  apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim-log-1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+```
+
+## pods with pvc claim
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+  namespace: default
+spec:
+  containers:
+  - env:
+    - name: LOG_HANDLERS
+      value: file
+    image: kodekloud/event-simulator
+    imagePullPolicy: Always
+    name: event-simulator
+    volumeMounts:
+    - mountPath: /log
+      name: log-dir
+  volumes:
+  - name: log-dir
+    persistentVolumeClaim:
+        claimName: claim-log-1
+```
+
+### StorageClass
